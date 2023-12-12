@@ -23,8 +23,6 @@ export async function registerUser(email, password, firstName, lastName) {
       "CREATE (u:User {email: $email, password: $hashedPassword, firstName: $firstName, lastName: $lastName}) RETURN u",
       { email, hashedPassword, firstName, lastName }
     );
-
-    return result.records[0]?.get("u").properties;
   } catch (error) {
     throw error;
   } finally {
@@ -78,12 +76,18 @@ export async function getAllPosts() {
     const result = await session.run(
       'MATCH (u:User)-[:CREATED]->(p:Post) ' +
       'OPTIONAL MATCH (p)<-[:ON]-(c:Comment) ' +
-      'RETURN p AS post, u AS user, count(c) AS commentCount ' +
+      'RETURN p AS post, ' +
+      'u.firstName AS firstName, u.lastName AS lastName, u.email AS email, ' +
+      'count(c) AS commentCount ' +
       'ORDER BY p.createdAt DESC'
     );
     const response = result.records.map(record => ({
       post: record.get('post').properties,
-      user: record.get('user').properties,
+      user: {
+        firstName: record.get('firstName'),
+        lastName: record.get('lastName'),
+        email: record.get('email')
+      },
       commentsCount: record.get('commentCount').toInt()
     }));
     return JSON.stringify(response);
@@ -99,13 +103,18 @@ export async function getCommentsByPostUuid(postUuid) {
   try {
     const result = await session.run(
       'MATCH (p:Post {uuid: $postUuid})<-[:ON]-(c:Comment)<-[:WROTE]-(u:User) ' +
-      'RETURN c AS comment, u AS user ' +
+      'RETURN c AS comment, ' +
+      'u.firstName AS firstName, u.lastName AS lastName, u.email AS email ' +
       'ORDER BY c.createdAt DESC',
       { postUuid }
     );
     const response = result.records.map(record => ({
       comment: record.get('comment').properties,
-      user: record.get('user').properties,
+      user: {
+        firstName: record.get('firstName'),
+        lastName: record.get('lastName'),
+        email: record.get('email')
+      }
     }));
     return JSON.stringify(response);
   } catch (error) {

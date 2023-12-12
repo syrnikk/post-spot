@@ -5,7 +5,6 @@ import Link from 'next/link';
 
 const Navbar = () => {
     const { data: session } = useSession();
-    console.log(session)
   
     return (
       <nav className="bg-gray-800 text-white p-4 flex justify-between">
