@@ -5,12 +5,16 @@ import Link from 'next/link';
 
 const Navbar = () => {
     const { data: session } = useSession();
+    console.log(session)
   
     return (
       <nav className="bg-gray-800 text-white p-4 flex justify-between">
-        <div>
+        <div className="flex space-x-8">
           <Link href="/" className="text-white hover:text-gray-300">
-            Home
+            POST SPOT
+          </Link>
+          <Link href="/post/createPost" className="text-white hover:text-gray-300">
+            New Post
           </Link>
         </div>
   
