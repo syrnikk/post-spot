@@ -70,16 +70,19 @@ export async function createPost(userEmail, textContent) {
   }
 }
 
-export async function getAllPosts() {
+export async function getAllPosts(userEmail) {
   const session = neo4jDriver.session();
   try {
     const result = await session.run(
       'MATCH (u:User)-[:CREATED]->(p:Post) ' +
       'OPTIONAL MATCH (p)<-[:ON]-(c:Comment) ' +
-      'RETURN p AS post, ' +
-      'u.firstName AS firstName, u.lastName AS lastName, u.email AS email, ' +
-      'count(c) AS commentCount ' +
-      'ORDER BY p.createdAt DESC'
+      'OPTIONAL MATCH (p)<-[l:LIKES]-() ' +
+      'OPTIONAL MATCH (liked:User {email: $userEmail})-[:LIKES]->(p) ' +
+      'RETURN p AS post, u.firstName AS firstName, u.lastName AS lastName, u.email AS email, ' +
+      'count(c) AS commentCount, count(l) AS likeCount, ' +
+      'exists((liked)-[:LIKES]->(p)) AS isLikedByUser ' +
+      'ORDER BY p.createdAt DESC',
+      { userEmail }
     );
     const response = result.records.map(record => ({
       post: record.get('post').properties,
@@ -88,7 +91,9 @@ export async function getAllPosts() {
         lastName: record.get('lastName'),
         email: record.get('email')
       },
-      commentsCount: record.get('commentCount').toInt()
+      commentsCount: record.get('commentCount').toInt(),
+      isLikedByUser: record.get('isLikedByUser'),
+      likeCount: record.get('likeCount').low
     }));
     return JSON.stringify(response);
   } catch (error) {
@@ -169,6 +174,36 @@ export async function deleteComment(commentUuid, userEmail) {
     );
   } catch (error) {
     throw new Error('Error deleting comment: ' + error.message);
+  } finally {
+    await session.close();
+  }
+}
+
+export async function likePost(postUuid, userEmail) {
+  const session = neo4jDriver.session();
+  try {
+    await session.run(
+      'MATCH (u:User {email: $userEmail}), (p:Post {uuid: $postUuid}) ' +
+      'MERGE (u)-[:LIKES]->(p)',
+      { postUuid, userEmail }
+    );
+  } catch (error) {
+    throw new Error('Error liking post: ' + error.message);
+  } finally {
+    await session.close();
+  }
+}
+
+export async function unlikePost(postUuid, userEmail) {
+  const session = neo4jDriver.session();
+  try {
+    await session.run(
+      'MATCH (u:User {email: $userEmail})-[l:LIKES]->(p:Post {uuid: $postUuid}) ' +
+      'DELETE l',
+      { postUuid, userEmail }
+    );
+  } catch (error) {
+    throw new Error('Error unliking post: ' + error.message);
   } finally {
     await session.close();
   }

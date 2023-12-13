@@ -6,6 +6,8 @@ import {
   deletePostAndComments,
   getAllPosts,
   getCommentsByPostUuid,
+  likePost,
+  unlikePost,
 } from "@/actions";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -25,7 +27,7 @@ export default function Page() {
   useEffect(() => {
     if (session) {
       const fetchData = async () => {
-        const postsData = JSON.parse(await getAllPosts());
+        const postsData = JSON.parse(await getAllPosts(session.user.email));
         setPosts(postsData);
       };
       fetchData();
@@ -52,7 +54,7 @@ export default function Page() {
       setPosts(
         posts.map((post) => {
           if (post.post.uuid === selectedPostUuid) {
-            post.commentsCount += 1; 
+            post.commentsCount += 1;
           }
           return post;
         })
@@ -84,13 +86,43 @@ export default function Page() {
     }
   };
 
+  const handleLikeClick = async (postUuid, isLiked) => {
+    try {
+      if (isLiked) {
+        await unlikePost(postUuid, session.user.email);
+        setPosts(
+            posts.map((post) => {
+              if (post.post.uuid === postUuid) {
+                post.isLikedByUser = false;
+                post.likeCount -= 1;
+              }
+              return post;
+            })
+          );
+      } else {
+        await likePost(postUuid, session.user.email);
+        setPosts(
+            posts.map((post) => {
+              if (post.post.uuid === postUuid) {
+                post.isLikedByUser = true;
+                post.likeCount += 1;
+              }
+              return post;
+            })
+          );
+      }
+    } catch (error) {
+      console.error("Failed to toggle like:", error);
+    }
+  };
+
   if (!session) {
     return <p>Loading...</p>;
   }
 
   return (
     <div className="container mx-auto p-4">
-      {posts.map(({ post, user, commentsCount }, index) => (
+      {posts.map(({ post, user, commentsCount, likeCount, isLikedByUser }, index) => (
         <div
           key={index}
           className="mb-6 p-4 bg-white rounded-lg shadow-lg relative"
@@ -122,7 +154,12 @@ export default function Page() {
           </div>
           <p className="mb-4">{post.textContent}</p>
           <div className="flex justify-between items-center">
-            <button className="text-blue-500 hover:text-blue-600">Like</button>
+            <button
+              className="text-blue-500"
+              onClick={() => handleLikeClick(post.uuid, isLikedByUser)}
+            >
+              {isLikedByUser ? 'Unlike' : 'Like'} ({likeCount})
+            </button>
             <button
               onClick={() => handleCommentClick(post.uuid)}
               className="text-green-500 hover:text-green-600"
