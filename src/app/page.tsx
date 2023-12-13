@@ -15,22 +15,31 @@ import { formatNeo4jDate } from "@/util/dateUtil";
 import CommentsDialog from "@/components/CommentsDialog";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { useRouter } from "next/navigation";
+import Loader from "@/components/Loader";
 
 export default function Page() {
+  const router = useRouter();
   const { data: session } = useSession();
   const [posts, setPosts] = useState([]);
   const [isCommentsDialogOpen, setIsCommentsDialogOpen] = useState(false);
   const [currentComments, setCurrentComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [selectedPostUuid, setSelectedPostUuid] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (session) {
-      const fetchData = async () => {
-        const postsData = JSON.parse(await getAllPosts(session.user.email));
-        setPosts(postsData);
-      };
-      fetchData();
+    if (session === undefined) {
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+      if (session) {
+        const fetchData = async () => {
+          const postsData = JSON.parse(await getAllPosts(session.user.email));
+          setPosts(postsData);
+        };
+        fetchData();
+      }
     }
   }, [session]);
 
@@ -116,8 +125,31 @@ export default function Page() {
     }
   };
 
+  if(isLoading) {
+    return <Loader />
+  }
+
   if (!session) {
-    return <p>Loading...</p>;
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <h2 className="text-2xl font-semibold mb-4">Welcome to Post Spot!</h2>
+        <p className="mb-4">Join the community by sharing your thoughts, commenting on posts, and engaging with others.</p>
+        <div>
+          <button 
+            onClick={() => router.push('/auth/signIn')} 
+            className="bg-blue-500 text-white font-bold py-2 px-4 rounded mr-2 hover:bg-blue-600"
+          >
+            Sign In
+          </button>
+          <button 
+            onClick={() => router.push('/auth/signUp')} 
+            className="bg-green-500 text-white font-bold py-2 px-4 rounded hover:bg-green-600"
+          >
+            Sign Up
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
