@@ -76,10 +76,13 @@ export async function getAllPosts(userEmail) {
     const result = await session.run(
       'MATCH (u:User)-[:CREATED]->(p:Post) ' +
       'OPTIONAL MATCH (p)<-[:ON]-(c:Comment) ' +
+      'WITH p, u, count(c) AS commentCount ' +
       'OPTIONAL MATCH (p)<-[l:LIKES]-() ' +
+      'WITH p, u, commentCount, count(l) AS likeCount ' +
       'OPTIONAL MATCH (liked:User {email: $userEmail})-[:LIKES]->(p) ' +
-      'RETURN p AS post, u.firstName AS firstName, u.lastName AS lastName, u.email AS email, ' +
-      'count(c) AS commentCount, count(l) AS likeCount, ' +
+      'RETURN p AS post, ' +
+      'u.firstName AS firstName, u.lastName AS lastName, u.email AS email, ' +
+      'commentCount, likeCount, ' +
       'exists((liked)-[:LIKES]->(p)) AS isLikedByUser ' +
       'ORDER BY p.createdAt DESC',
       { userEmail }
@@ -153,7 +156,7 @@ export async function deletePostAndComments(postUuid, userEmail) {
   try {
     await session.run(
       'MATCH (u:User {email: $userEmail})-[:CREATED]->(p:Post {uuid: $postUuid}) ' +
-      'OPTIONAL MATCH (p)-[:HAS_COMMENT]->(c:Comment) ' +
+      'OPTIONAL MATCH (p)<-[:ON]-(c:Comment) ' +
       'DETACH DELETE p, c',
       { postUuid, userEmail }
     );

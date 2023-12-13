@@ -90,6 +90,14 @@ export default function Page() {
           (comment) => comment.comment.uuid !== commentUuid
         )
       );
+      setPosts(
+        posts.map((post) => {
+          if (post.post.uuid === selectedPostUuid) {
+            post.commentsCount -= 1;
+          }
+          return post;
+        })
+      );
     } catch (error) {
       console.error("Failed to delete comment:", error);
     }
