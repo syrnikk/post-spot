@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation'
 import { registerUser } from '../../../actions';
 
@@ -13,13 +13,13 @@ export default function Page() {
   const [lastName, setLastName] = useState('');
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
+  const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     try{
       await registerUser(email, password, firstName, lastName);
       router.push('/auth/signIn');
     } catch(error) {
-      if(error.message == 'EmailExists') {
+      if(error instanceof Error && error.message == 'EmailExists') {
         setErrorMessage('Email already exists');
       }
     }

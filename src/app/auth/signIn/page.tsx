@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { FormEvent, useState } from "react";
+import { SignInResponse, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function Page() {
@@ -11,16 +11,20 @@ export default function Page() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setErrorMessage(""); // Reset error message
 
-    const response = await signIn("credentials", {
+    const response: SignInResponse | undefined = await signIn("credentials", {
       redirect: false,
       email,
       password,
     });
 
+    if(response === undefined) {
+      setErrorMessage("Problem to sign in");
+      return;
+    }
     if (response.ok) {
       router.push('/'); // Redirect to home page on successful login
     } else {

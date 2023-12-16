@@ -2,8 +2,9 @@
 
 import bcrypt from "bcryptjs";
 import neo4jDriver from "./lib/neo4j";
+import { User } from "./types";
 
-export async function registerUser(email, password, firstName, lastName) {
+export async function registerUser(email: string, password: string, firstName: string, lastName: string) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const session = neo4jDriver.session();
@@ -30,7 +31,7 @@ export async function registerUser(email, password, firstName, lastName) {
   }
 }
 
-export async function authenticateUser(email, password) {
+export async function authenticateUser(email: string, password: string): Promise<User | null> {
   const session = neo4jDriver.session();
   try {
     const result = await session.run(
@@ -40,18 +41,18 @@ export async function authenticateUser(email, password) {
 
     const user = result.records[0]?.get("u").properties;
     if (user && (await bcrypt.compare(password, user.password))) {
-      return { email: user.email, firstName: user.firstName, lastName: user.lastName }; 
+      return { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName }; 
     } else {
       return null;
     }
   } catch (error) {
-    throw new Error("Error verifying user: " + error.message);
+    throw new Error("Error verifying user");
   } finally {
     await session.close();
   }
 }
 
-export async function createPost(userEmail, textContent) {
+export async function createPost(userEmail: string, textContent: string) {
   const session = neo4jDriver.session();
   try {
     const result = await session.run(
@@ -61,16 +62,15 @@ export async function createPost(userEmail, textContent) {
         "RETURN p",
       { userEmail, textContent }
     );
-    const response = result.records[0]?.get("p").properties;
-    return JSON.stringify(response);
+    result.records[0]?.get("p").properties;
   } catch (error) {
-    throw new Error("Error creating post: " + error.message);
+    throw new Error("Error creating post");
   } finally {
     await session.close();
   }
 }
 
-export async function getAllPosts(userEmail) {
+export async function getAllPosts(userEmail: string) {
   const session = neo4jDriver.session();
   try {
     const result = await session.run(
@@ -100,13 +100,13 @@ export async function getAllPosts(userEmail) {
     }));
     return JSON.stringify(response);
   } catch (error) {
-    throw new Error('Error fetching posts: ' + error.message);
+    throw new Error('Error fetching posts');
   } finally {
     await session.close();
   }
 }
 
-export async function getCommentsByPostUuid(postUuid) {
+export async function getCommentsByPostUuid(postUuid: string) {
   const session = neo4jDriver.session();
   try {
     const result = await session.run(
@@ -126,13 +126,13 @@ export async function getCommentsByPostUuid(postUuid) {
     }));
     return JSON.stringify(response);
   } catch (error) {
-    throw new Error('Error fetching comments: ' + error.message);
+    throw new Error('Error fetching comments');
   } finally {
     await session.close();
   }
 }
 
-export async function addCommentToPost(postUuid, userEmail, commentText) {
+export async function addCommentToPost(postUuid: string, userEmail: string, commentText: string) {
   const session = neo4jDriver.session();
   try {
     const result = await session.run(
@@ -145,13 +145,13 @@ export async function addCommentToPost(postUuid, userEmail, commentText) {
     const response = result.records[0]?.get('c').properties;
     return JSON.stringify(response);
   } catch (error) {
-    throw new Error('Error adding comment: ' + error.message);
+    throw new Error('Error adding comment');
   } finally {
     await session.close();
   }
 }
 
-export async function deletePostAndComments(postUuid, userEmail) {
+export async function deletePostAndComments(postUuid: string, userEmail: string) {
   const session = neo4jDriver.session();
   try {
     await session.run(
@@ -161,13 +161,13 @@ export async function deletePostAndComments(postUuid, userEmail) {
       { postUuid, userEmail }
     );
   } catch (error) {
-    throw new Error('Error deleting post and comments: ' + error.message);
+    throw new Error('Error deleting post and comments');
   } finally {
     await session.close();
   }
 }
 
-export async function deleteComment(commentUuid, userEmail) {
+export async function deleteComment(commentUuid: string, userEmail: string) {
   const session = neo4jDriver.session();
   try {
     await session.run(
@@ -176,13 +176,13 @@ export async function deleteComment(commentUuid, userEmail) {
       { commentUuid, userEmail }
     );
   } catch (error) {
-    throw new Error('Error deleting comment: ' + error.message);
+    throw new Error('Error deleting comment');
   } finally {
     await session.close();
   }
 }
 
-export async function likePost(postUuid, userEmail) {
+export async function likePost(postUuid: string, userEmail: string) {
   const session = neo4jDriver.session();
   try {
     await session.run(
@@ -191,13 +191,13 @@ export async function likePost(postUuid, userEmail) {
       { postUuid, userEmail }
     );
   } catch (error) {
-    throw new Error('Error liking post: ' + error.message);
+    throw new Error('Error liking post');
   } finally {
     await session.close();
   }
 }
 
-export async function unlikePost(postUuid, userEmail) {
+export async function unlikePost(postUuid: string, userEmail: string) {
   const session = neo4jDriver.session();
   try {
     await session.run(
@@ -206,7 +206,7 @@ export async function unlikePost(postUuid, userEmail) {
       { postUuid, userEmail }
     );
   } catch (error) {
-    throw new Error('Error unliking post: ' + error.message);
+    throw new Error('Error unliking post');
   } finally {
     await session.close();
   }

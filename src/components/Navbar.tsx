@@ -21,7 +21,7 @@ const Navbar = () => {
           {session ? (
             <>
               <span className="flex items-center">
-                <span className="mr-2">{session.user.email}</span>
+                <span className="mr-2">{session?.user?.email}</span>
                 <button onClick={() => signOut()} className="text-white hover:text-gray-300">Sign out</button>
               </span>
             </>

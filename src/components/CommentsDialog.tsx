@@ -1,5 +1,6 @@
 "use client";
 
+import { CommentsDialogProps, DetailedComment } from "@/types";
 import { formatNeo4jDate } from "@/util/dateUtil";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,7 +14,7 @@ const CommentsDialog = ({
   loading,
   onCommentSubmit,
   onCommentDelete,
-}) => {
+} : CommentsDialogProps) => {
   const { data: session } = useSession();
 
   const [newComment, setNewComment] = useState("");
@@ -53,7 +54,7 @@ const CommentsDialog = ({
                 <div className="text-gray-500 text-xs">
                   {formatNeo4jDate(comment.comment.createdAt)}
                 </div>
-                {comment.user.email === session.user.email && (
+                {comment.user.email === session?.user?.email && (
                   <button
                     onClick={() => onCommentDelete(comment.comment.uuid)}
                     className="absolute top-2 right-7 text-red-500 hover:text-red-600"
